@@ -81,6 +81,9 @@ final class WP_Term_Meta {
 		// New site creation
 		add_action( 'wpmu_new_blog',  array( $this, 'new_blog' ) );
 
+		// Add `termmeta` to array of tables to delete
+		add_filter( 'wpmu_drop_tables', array( $this, 'drop_tables' ) );
+
 		// Check if DB needs upgrading
 		if ( is_admin() ) {
 			add_action( 'admin_init', array( $this, 'admin_init' ) );
@@ -120,6 +123,24 @@ final class WP_Term_Meta {
 		if ( is_plugin_active_for_network( $this->basename ) ) {
 			$this->install( $site_id );
 		}
+	}
+
+	/**
+	 * Also drop the `termmeta` table
+	 *
+	 * @since 0.1.0
+	 *
+	 * @global object $wpdb
+	 *
+	 * @param array $tables
+	 */
+	public function drop_tables( $tables = array() ) {
+		global $wpdb;
+
+		// Add the `termmeta` table to the $tables array
+		$tables[] = "{$wpdb->prefix}termmeta";
+
+		return $tables;
 	}
 
 	/**
