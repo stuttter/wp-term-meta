@@ -32,7 +32,7 @@ final class WP_Term_Meta {
 	/**
 	 * @var string Database version
 	 */
-	public $db_version = '201508110001';
+	public $db_version = 201508110001;
 
 	/**
 	 * @var string Database version key
@@ -216,7 +216,7 @@ final class WP_Term_Meta {
 		$db_version = get_option( $this->db_version_key );
 
 		// Needs
-		if ( $db_version < $this->db_version ) {
+		if ( (int) $db_version < $this->db_version ) {
 			$this->upgrade_database( $db_version );
 		}
 	}
