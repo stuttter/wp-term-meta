@@ -394,6 +394,11 @@ function _wp_term_meta_clauses( $pieces = array(), $taxonomies = array(), $args 
 
 		// Combine pieces & meta-query clauses
 		if ( ! empty( $meta_query->queries ) ) {
+
+			/**
+			 * It's possible in a future version of WordPress that our `term_id`
+			 * usage might need to be swapped to `term_taxonomy_id`.
+			 */
 			$meta_clauses     = $meta_query->get_sql( 'term', 'tt', 'term_id', $taxonomies );
 			$pieces['join']  .= $meta_clauses['join'];
 			$pieces['where'] .= $meta_clauses['where'];
