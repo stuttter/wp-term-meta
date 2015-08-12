@@ -13,9 +13,9 @@
 // Exit if accessed directly
 defined( 'ABSPATH' ) || exit;
 
-if ( ! class_exists( 'WP_Term_Order' ) ) :
+if ( ! class_exists( 'WP_Term_Meta' ) ) :
 /**
- * Main WP Term Order class
+ * Main WP Term Meta class
  *
  * @link https://make.wordpress.org/core/2013/07/28/potential-roadmap-for-taxonomy-meta-and-post-relationships/ Taxonomy Roadmap
  * @link http://core.trac.wordpress.org/ticket/10142 Term meta discussion
