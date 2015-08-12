@@ -32,7 +32,7 @@ final class WP_Term_Meta {
 	/**
 	 * @var string Database version
 	 */
-	public $db_version = 201508110001;
+	public $db_version = 201508110005;
 
 	/**
 	 * @var string Database version key
