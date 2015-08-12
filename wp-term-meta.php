@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Plugin Name: WP Term Meta
  * Plugin URI:  https://wordpress.org/plugins/wp-term-meta/
