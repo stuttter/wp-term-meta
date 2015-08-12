@@ -106,7 +106,7 @@ final class WP_Term_Meta {
 	 *
 	 * @since 0.1.0
 	 */
-	public function modify_wpdb() {
+	public static function modify_wpdb() {
 		global $wpdb;
 		$wpdb->termmeta = "{$wpdb->prefix}termmeta";
 	}
@@ -368,3 +368,59 @@ function get_term_meta( $term_id, $key, $single = false ) {
 function update_term_meta( $term_id, $meta_key, $meta_value, $prev_value = '' ) {
 	return update_metadata( 'term', $term_id, $meta_key, $meta_value, $prev_value );
 }
+
+/** Term Meta Query ***********************************************************/
+
+/**
+ * Filter `term_clauses` and add support for a `meta_query`
+ *
+ * @param array $pieces     Terms query SQL clauses.
+ * @param array $taxonomies An array of taxonomies.
+ * @param array $args       An array of terms query arguments.
+ *
+ * @return Array of query pieces, maybe modifed
+ */
+function _wp_term_meta_clauses( $pieces = array(), $taxonomies = array(), $args = array() ) {
+
+	// Maybe do a meta query
+	if ( ! empty( $args['meta_query'] ) ) {
+
+		// Make doubly sure $wpdb is prepared
+		WP_Term_Meta::modify_wpdb();
+
+		// Get the meta query parts
+		$meta_query = new WP_Meta_Query( $args['meta_query'] );
+		$meta_query->parse_query_vars( $args );
+
+		// Combine pieces & meta-query clauses
+		if ( ! empty( $meta_query->queries ) ) {
+			$meta_clauses     = $meta_query->get_sql( 'term', 'tt', 'term_id', $taxonomies );
+			$pieces['join']  .= $meta_clauses['join'];
+			$pieces['where'] .= $meta_clauses['where'];
+		}
+	}
+
+	// Return possibly modified pieces array
+	return $pieces;
+}
+add_filter( 'terms_clauses', '_wp_term_meta_clauses', 10, 3 );
+
+/**
+ * Filter `get_terms_args` and add an empty `meta_query` argument.
+ *
+ * This is mostly a dumb hack to ensure that `meta_query` starts as an available
+ * argument in the `$args` array, to get developers familiar with it eventually
+ * maybe possibly being available all of the time.
+ *
+ * @since 0.1.0
+ *
+ * @param  array  $args  An array of get_term() arguments.
+ *
+ * @return array  Array of arguments with `meta_query` parameter added
+ */
+function _wp_get_terms_args( $args = array() ) {
+	return wp_parse_args( $args, array(
+		'meta_query' => ''
+	) );
+}
+add_filter( 'get_terms_args', '_wp_get_terms_args', -999 );
