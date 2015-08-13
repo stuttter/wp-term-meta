@@ -298,7 +298,7 @@ final class WP_Term_Meta {
 	 */
 	public function activate( $network_wide = false ) {
 
-		// if activated on a particular blog, just set it up there.
+		// If activated on a particular blog, just set it up there.
 		if ( false === $network_wide ) {
 			$this->install();
 			return;
