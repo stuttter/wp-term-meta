@@ -42,22 +42,29 @@ final class WP_Term_Meta {
 	/**
 	 * @var string File for plugin
 	 */
-	public $file = '';
+	private $file = '';
 
 	/**
 	 * @var string URL to plugin
 	 */
-	public $url = '';
+	private $url = '';
 
 	/**
 	 * @var string Path to plugin
 	 */
-	public $path = '';
+	private $path = '';
 
 	/**
 	 * @var string Basename for plugin
 	 */
-	public $basename = '';
+	private $basename = '';
+
+	/**
+	 * @var object Database object (usually $GLOBALS['wpdb'])
+	 */
+	private $db = false;
+
+	/** Methods ***************************************************************/
 
 	/**
 	 * Hook into queries, admin screens, and more!
@@ -74,10 +81,18 @@ final class WP_Term_Meta {
 		$this->url      = plugin_dir_url( $this->file );
 		$this->path     = plugin_dir_path( $this->file );
 		$this->basename = plugin_basename( $this->file );
+		$this->db       = $GLOBALS['wpdb'];
 
-		// Force `termmeta` on to $wpdb global
-		add_action( 'init',           array( $this, 'modify_wpdb' ) );
-		add_action( 'switch_to_blog', array( $this, 'modify_wpdb' ) );
+		// Force `termmeta` on to the global database object
+		add_action( 'init',           array( $this, 'add_termmeta_to_db_object' ) );
+		add_action( 'switch_to_blog', array( $this, 'add_termmeta_to_db_object' ) );
+
+		// Make `meta_query` arguments work
+		add_filter( 'terms_clauses',  array( $this, 'terms_clauses'  ), 10, 3 );
+		add_filter( 'get_terms_args', array( $this, 'get_terms_args' ), -999 );
+
+		// Delete all metadata when term is deleted
+		add_action( 'deleted_term_taxonomy', array( $this, 'delete_all_meta_for_term' ) );
 
 		// New site creation
 		add_action( 'wpmu_new_blog',  array( $this, 'new_blog' ) );
@@ -103,13 +118,15 @@ final class WP_Term_Meta {
 	}
 
 	/**
-	 * Quick touchup to `$wpdb`
+	 * Modify the database object and add the `termmeta` table to it
+	 *
+	 * This is necessary to do directly because WordPress does have a mechanism
+	 * for manipulating them safely. It's pretty fragile, but oh well.
 	 *
 	 * @since 0.1.0
 	 */
-	public static function modify_wpdb() {
-		global $wpdb;
-		$wpdb->termmeta = "{$wpdb->prefix}termmeta";
+	public function add_termmeta_to_db_object() {
+		$this->db->termmeta = "{$this->db->prefix}termmeta";
 	}
 
 	/**
@@ -131,15 +148,12 @@ final class WP_Term_Meta {
 	 *
 	 * @since 0.1.0
 	 *
-	 * @global object $wpdb
-	 *
 	 * @param array $tables
 	 */
 	public function drop_tables( $tables = array() ) {
-		global $wpdb;
 
 		// Add the `termmeta` table to the $tables array
-		$tables[] = "{$wpdb->prefix}termmeta";
+		$tables[] = "{$this->db->prefix}termmeta";
 
 		return $tables;
 	}
@@ -178,11 +192,9 @@ final class WP_Term_Meta {
 	 *
 	 * @since 0.1.0
 	 *
-	 * @global  object  $wpdb
 	 * @param   bool    $network_wide
 	 */
 	public function activate( $network_wide = false ) {
-		global $wpdb;
 
 		// if activated on a particular blog, just set it up there.
 		if ( false === $network_wide ) {
@@ -196,8 +208,8 @@ final class WP_Term_Meta {
 		}
 
 		// Install on all sites in the network
-		$sql   = "SELECT blog_id FROM {$wpdb->blogs} WHERE site_id = '{$wpdb->siteid}'";
-		$sites = $wpdb->get_col( $sql );
+		$sql   = "SELECT blog_id FROM {$this->db->blogs} WHERE site_id = '{$this->db->siteid}'";
+		$sites = $this->db->get_col( $sql );
 		foreach ( $sites as $site_id ) {
 			$this->install( $site_id );
 		}
@@ -227,8 +239,6 @@ final class WP_Term_Meta {
 	 * @since 0.1.0
 	 *
 	 * @param  int $old_version
-	 *
-	 * @global object $wpdb
 	 */
 	private function upgrade_database( $old_version = 0 ) {
 
@@ -247,19 +257,16 @@ final class WP_Term_Meta {
 	 * Create the `termmeta` table
 	 *
 	 * @since 0.1.0
-	 *
-	 * @global object $wpdb
 	 */
 	private function create_termmeta_table() {
-		global $wpdb;
 
 		$charset_collate = '';
-		if ( ! empty( $wpdb->charset ) ) {
-			$charset_collate = "DEFAULT CHARACTER SET {$wpdb->charset}";
+		if ( ! empty( $this->db->charset ) ) {
+			$charset_collate = "DEFAULT CHARACTER SET {$this->db->charset}";
 		}
 
-		if ( ! empty( $wpdb->collate ) ) {
-			$charset_collate .= " COLLATE {$wpdb->collate}";
+		if ( ! empty( $this->db->collate ) ) {
+			$charset_collate .= " COLLATE {$this->db->collate}";
 		}
 
 		/*
@@ -275,7 +282,7 @@ final class WP_Term_Meta {
 		}
 
 		dbDelta( array(
-			"CREATE TABLE {$wpdb->prefix}termmeta (
+			"CREATE TABLE {$this->db->prefix}termmeta (
 				meta_id bigint(20) unsigned NOT NULL auto_increment,
 				term_id bigint(20) unsigned NOT NULL default '0',
 				meta_key varchar(255) default NULL,
@@ -286,8 +293,105 @@ final class WP_Term_Meta {
 			) {$charset_collate};"
 		) );
 
-		// Make doubly sure the `$wpdb` global is modified
-		$this->modify_wpdb();
+		// Make doubly sure the global database object is modified
+		$this->add_termmeta_to_db_object();
+	}
+
+	/** Term Meta Query *******************************************************/
+
+	/**
+	 * Filter `term_clauses` and add support for a `meta_query` argument
+	 *
+	 * @param array $pieces     Terms query SQL clauses.
+	 * @param array $taxonomies An array of taxonomies.
+	 * @param array $args       An array of terms query arguments.
+	 *
+	 * @return Array of query pieces, maybe modifed
+	 */
+	public function terms_clauses( $pieces = array(), $taxonomies = array(), $args = array() ) {
+
+		// Maybe do a meta query
+		if ( ! empty( $args['meta_query'] ) ) {
+
+			// Make doubly sure global database object is prepared
+			$this->add_termmeta_to_db_object();
+
+			// Get the meta query parts
+			$meta_query = new WP_Meta_Query( $args['meta_query'] );
+			$meta_query->parse_query_vars( $args );
+
+			// Combine pieces & meta-query clauses
+			if ( ! empty( $meta_query->queries ) ) {
+
+				/**
+				 * It's possible in a future version of WordPress that our
+				 * `term_id` usage might need to be swapped to `term_taxonomy_id`.
+				 */
+				$meta_clauses     = $meta_query->get_sql( 'term', 'tt', 'term_id', $taxonomies );
+				$pieces['join']  .= $meta_clauses['join'];
+				$pieces['where'] .= $meta_clauses['where'];
+			}
+		}
+
+		// Return possibly modified pieces array
+		return $pieces;
+	}
+
+	/**
+	 * Filter `get_terms_args` and add an empty `meta_query` argument.
+	 *
+	 * This is mostly a dumb hack to ensure that `meta_query` starts as an
+	 * available argument in the `$args` array, to get developers familiar with
+	 * it eventually maybe possibly being available all of the time.
+	 *
+	 * If we're being honest with each other, this method isn't even really
+	 * necessary. It's just me being pedantic about environment variables, and
+	 * hoping that if someone else comes along and sees how much care I took to
+	 * be this thorough, they'll say "hey good job" or "that was really cool
+	 * that you did that thing that no one else would have thought to do."
+	 *
+	 * @since 0.1.0
+	 *
+	 * @param  array  $args  An array of get_term() arguments.
+	 *
+	 * @return array  Array of arguments with `meta_query` parameter added
+	 */
+	public function get_terms_args( $args = array() ) {
+		return wp_parse_args( $args, array(
+			'meta_query' => ''
+		) );
+	}
+
+	/**
+	 * Delete all metadata for a given term ID
+	 *
+	 * This bit is largely taken from `wp_delete_post()` as there is no meta-
+	 * data function specifically designed to facilitate the deletion of all
+	 * meta associated with a given object.
+	 *
+	 * @since 0.1.0
+	 *
+	 * @param  int    $term_id Term ID
+	 */
+	public function delete_all_meta_for_term( $term_id = 0 ) {
+
+		// Make doubly sure global database object is prepared
+		$this->add_termmeta_to_db_object();
+
+		// Query the DB for metad ID's to delete
+		$query         = "SELECT meta_id FROM {$this->db->termmeta} WHERE term_id = %d";
+		$prepared      = $this->db->prepare( $query, $term_id );
+		$term_meta_ids = $this->db->get_col( $prepared );
+
+		// Bail if no term metadata to delete
+		if ( empty( $term_meta_ids ) ) {
+			return;
+		}
+
+		// Loop through and delete all meta by ID
+		foreach ( $term_meta_ids as $mid ) {
+			delete_metadata_by_mid( 'term', $mid );
+		}
 	}
 }
 endif;
@@ -327,6 +431,8 @@ function add_term_meta( $term_id, $meta_key, $meta_value, $unique = false ) {
  * value, will keep from removing duplicate metadata with the same key. It also
  * allows removing all metadata matching key if needed.
  *
+ * @since 0.1.0
+ *
  * @param  int     $term_id    Term ID
  * @param  string  $meta_key   Metadata name
  * @param  mixed   $meta_value Optional. Metadata value
@@ -338,7 +444,22 @@ function delete_term_meta( $term_id, $meta_key, $meta_value = '' ) {
 }
 
 /**
+ * Delete everything from term meta matching meta key.
+ *
+ * @since 0.1.0
+ *
+ * @param string $term_meta_key Key to search for when deleting.
+ *
+ * @return bool Whether the term meta key was deleted from the database.
+ */
+function delete_term_meta_by_key( $term_meta_key ) {
+	return delete_metadata( 'term', null, $term_meta_key, '', true );
+}
+
+/**
  * Retrieve term meta field for a term.
+ *
+ * @since 0.1.0
  *
  * @param  int     $term_id  Term ID
  * @param  string  $key      The meta key to retrieve
@@ -359,6 +480,8 @@ function get_term_meta( $term_id, $key, $single = false ) {
  *
  * If the meta field for the term does not exist, it will be added.
  *
+ * @since 0.1.0
+ *
  * @param  int    $term_id     Term ID
  * @param  string $meta_key    Metadata key
  * @param  mixed  $meta_value  Metadata value
@@ -369,64 +492,3 @@ function get_term_meta( $term_id, $key, $single = false ) {
 function update_term_meta( $term_id, $meta_key, $meta_value, $prev_value = '' ) {
 	return update_metadata( 'term', $term_id, $meta_key, $meta_value, $prev_value );
 }
-
-/** Term Meta Query ***********************************************************/
-
-/**
- * Filter `term_clauses` and add support for a `meta_query`
- *
- * @param array $pieces     Terms query SQL clauses.
- * @param array $taxonomies An array of taxonomies.
- * @param array $args       An array of terms query arguments.
- *
- * @return Array of query pieces, maybe modifed
- */
-function _wp_term_meta_clauses( $pieces = array(), $taxonomies = array(), $args = array() ) {
-
-	// Maybe do a meta query
-	if ( ! empty( $args['meta_query'] ) ) {
-
-		// Make doubly sure $wpdb is prepared
-		WP_Term_Meta::modify_wpdb();
-
-		// Get the meta query parts
-		$meta_query = new WP_Meta_Query( $args['meta_query'] );
-		$meta_query->parse_query_vars( $args );
-
-		// Combine pieces & meta-query clauses
-		if ( ! empty( $meta_query->queries ) ) {
-
-			/**
-			 * It's possible in a future version of WordPress that our `term_id`
-			 * usage might need to be swapped to `term_taxonomy_id`.
-			 */
-			$meta_clauses     = $meta_query->get_sql( 'term', 'tt', 'term_id', $taxonomies );
-			$pieces['join']  .= $meta_clauses['join'];
-			$pieces['where'] .= $meta_clauses['where'];
-		}
-	}
-
-	// Return possibly modified pieces array
-	return $pieces;
-}
-add_filter( 'terms_clauses', '_wp_term_meta_clauses', 10, 3 );
-
-/**
- * Filter `get_terms_args` and add an empty `meta_query` argument.
- *
- * This is mostly a dumb hack to ensure that `meta_query` starts as an available
- * argument in the `$args` array, to get developers familiar with it eventually
- * maybe possibly being available all of the time.
- *
- * @since 0.1.0
- *
- * @param  array  $args  An array of get_term() arguments.
- *
- * @return array  Array of arguments with `meta_query` parameter added
- */
-function _wp_get_terms_args( $args = array() ) {
-	return wp_parse_args( $args, array(
-		'meta_query' => ''
-	) );
-}
-add_filter( 'get_terms_args', '_wp_get_terms_args', -999 );
