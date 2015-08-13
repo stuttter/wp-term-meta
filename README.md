@@ -16,7 +16,7 @@ WP Term Meta allows developers to store key/value pairs of data along with a cat
 
 ```
 /**
- * Add meta data field to a term.
+ * Add metadata field to a term.
  *
  * @since 0.1.0
  * @param  int     $term_id     Post ID
@@ -46,6 +46,59 @@ WP Term Meta allows developers to store key/value pairs of data along with a cat
  * @param  mixed   $meta_value Optional. Metadata value
  *
  * @return bool False for failure. True for success.
+ */
+```
+
+### delete_term_meta_by_key()
+
+```
+/**
+ * Delete everything from term meta matching meta key.
+ *
+ * @since 0.1.0
+ *
+ * @param string $term_meta_key Key to search for when deleting.
+ *
+ * @return bool Whether the term meta key was deleted from the database.
+ */
+```
+
+### get_term_meta()
+
+```
+/**
+ * Retrieve term meta field for a term.
+ *
+ * @since 0.1.0
+ *
+ * @param  int     $term_id  Term ID
+ * @param  string  $key      The meta key to retrieve
+ * @param  bool    $single   Whether to return a single value
+ *
+ * @return mixed Will be an array if $single is false. Will be value of meta
+ *               data field if $single is true
+ */
+```
+
+### update_term_meta()
+
+```
+/**
+ * Update term meta field based on term ID.
+ *
+ * Use the $prev_value parameter to differentiate between meta fields with the
+ * same key and term ID.
+ *
+ * If the meta field for the term does not exist, it will be added.
+ *
+ * @since 0.1.0
+ *
+ * @param  int    $term_id     Term ID
+ * @param  string $meta_key    Metadata key
+ * @param  mixed  $meta_value  Metadata value
+ * @param  mixed  $prev_value  Optional. Previous value to check before removing
+ *
+ * @return bool False on failure, true if success.
  */
 ```
 
