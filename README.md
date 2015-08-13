@@ -106,11 +106,15 @@ WP Term Meta allows developers to store key/value pairs of data along with a cat
 
 ### Does this create new database tables?
 
-Yes. It creates a new `wp_terms` database table for each site it's activated on.
+Yes. It creates a new `wp_termmeta` database table for each site it's activated on.
 
 ### Does this modify existing database tables?
 
 No. All of WordPress's core database tables remain untouched.
+
+### Does this support querying by metadata?
+
+Yes. It uses the `WP_Meta_Query` class to create the necessary MySQL. You can interface with it by passing a `meta_query` argument into `get_terms()`, by filtering `get_terms_args` or however else you choose.
 
 ### Where can I get support? =
 
