@@ -14,7 +14,7 @@
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Add meta data field to a term.
+ * Add metadata field to a term.
  *
  * @param  int     $term_id     Post ID
  * @param  string  $meta_key    Metadata name
