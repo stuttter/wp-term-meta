@@ -111,8 +111,8 @@ http://codex.wordpress.org/Class_Reference/WP_Meta_Query
 $terms = get_terms( 'category', array(
 	'depth'      => 1,
 	'number'     => 100,
-	'parent'     => $parent_id,
-	'orderby'    => 'order',
+	'parent'     => 0,
+	'orderby'    => 'order', // Try the "wp-term-order" plugin!
 	'order'      => 'ASC',
 	'hide_empty' => false,
 	'meta_query' => array( array(
