@@ -13,9 +13,106 @@
 // Exit if accessed directly
 defined( 'ABSPATH' ) || exit;
 
+/**
+ * Add meta data field to a term.
+ *
+ * @param  int     $term_id     Post ID
+ * @param  string  $meta_key    Metadata name
+ * @param  mixed   $meta_value  Metadata value
+ * @param  bool    $unique      Optional, default is false. Whether the same key
+ *                              can be duplicated
+ *
+ * @return bool False for failure. True for success.
+ */
+function add_term_meta( $term_id, $meta_key, $meta_value, $unique = false ) {
+	return add_metadata( 'term', $term_id, $meta_key, $meta_value, $unique );
+}
+
+/**
+ * Remove metadata matching criteria from a term.
+ *
+ * You can match based on the key, or key and value. Removing based on key and
+ * value, will keep from removing duplicate metadata with the same key. It also
+ * allows removing all metadata matching key if needed.
+ *
+ * @since 0.1.0
+ *
+ * @param  int     $term_id    Term ID
+ * @param  string  $meta_key   Metadata name
+ * @param  mixed   $meta_value Optional. Metadata value
+ *
+ * @return bool False for failure. True for success.
+ */
+function delete_term_meta( $term_id, $meta_key, $meta_value = '' ) {
+	return delete_metadata( 'term', $term_id, $meta_key, $meta_value );
+}
+
+/**
+ * Delete everything from term meta matching meta key.
+ *
+ * @since 0.1.0
+ *
+ * @param string $term_meta_key Key to search for when deleting.
+ *
+ * @return bool Whether the term meta key was deleted from the database.
+ */
+function delete_term_meta_by_key( $term_meta_key ) {
+	return delete_metadata( 'term', null, $term_meta_key, '', true );
+}
+
+/**
+ * Retrieve term meta field for a term.
+ *
+ * @since 0.1.0
+ *
+ * @param  int     $term_id  Term ID
+ * @param  string  $key      The meta key to retrieve
+ * @param  bool    $single   Whether to return a single value
+ *
+ * @return mixed Will be an array if $single is false. Will be value of meta
+ *               data field if $single is true
+ */
+function get_term_meta( $term_id, $key, $single = false ) {
+	return get_metadata( 'term', $term_id, $key, $single );
+}
+
+/**
+ * Update term meta field based on term ID.
+ *
+ * Use the $prev_value parameter to differentiate between meta fields with the
+ * same key and term ID.
+ *
+ * If the meta field for the term does not exist, it will be added.
+ *
+ * @since 0.1.0
+ *
+ * @param  int    $term_id     Term ID
+ * @param  string $meta_key    Metadata key
+ * @param  mixed  $meta_value  Metadata value
+ * @param  mixed  $prev_value  Optional. Previous value to check before removing
+ *
+ * @return bool False on failure, true if success.
+ */
+function update_term_meta( $term_id, $meta_key, $meta_value, $prev_value = '' ) {
+	return update_metadata( 'term', $term_id, $meta_key, $meta_value, $prev_value );
+}
+
+/** Main Class ****************************************************************/
+
 if ( ! class_exists( 'WP_Term_Meta' ) ) :
 /**
  * Main WP Term Meta class
+ *
+ * This class is a big monkey patch to make WordPress term metadata possible. It
+ * facilitates the following functionality:
+ *
+ * - Creates & maintains the `wp_termmeta` table
+ * - Listens for new blogs
+ * - Listens for blog deletion and deletes the `wp_termmeta` table
+ * - Uses `WP_Meta_Query` and looks for	`meta_query` arguments
+ * - Deletes all metadata for terms when terms are deleted
+ * - Adds `wp_termmeta` to the main database object when appropriate
+ * -
  *
  * @link https://make.wordpress.org/core/2013/07/28/potential-roadmap-for-taxonomy-meta-and-post-relationships/ Taxonomy Roadmap
  * @link http://core.trac.wordpress.org/ticket/10142 Term meta discussion
@@ -152,8 +249,13 @@ final class WP_Term_Meta {
 	 */
 	public function drop_tables( $tables = array() ) {
 
+		// Table to check for
+		$table = "{$this->db->prefix}termmeta";
+
 		// Add the `termmeta` table to the $tables array
-		$tables[] = "{$this->db->prefix}termmeta";
+		if ( ! isset( $tables[ $table ] ) ) {
+			$tables[] = $table;
+		}
 
 		return $tables;
 	}
@@ -208,8 +310,9 @@ final class WP_Term_Meta {
 		}
 
 		// Install on all sites in the network
-		$sql   = "SELECT blog_id FROM {$this->db->blogs} WHERE site_id = '{$this->db->siteid}'";
-		$sites = $this->db->get_col( $sql );
+		$sql      = "SELECT blog_id FROM {$this->db->blogs} WHERE site_id = %d";
+		$prepared = $this->db->prepare( $sql, $this->db->siteid );
+		$sites    = $this->db->get_col( $prepared );
 		foreach ( $sites as $site_id ) {
 			$this->install( $site_id );
 		}
@@ -394,7 +497,6 @@ final class WP_Term_Meta {
 		}
 	}
 }
-endif;
 
 /**
  * Instantiate the main WordPress Term Meta class.
@@ -406,89 +508,4 @@ function _wp_term_meta() {
 }
 add_action( 'plugins_loaded', '_wp_term_meta' );
 
-
-/** Functions *****************************************************************/
-
-/**
- * Add meta data field to a term.
- *
- * @param  int     $term_id     Post ID
- * @param  string  $meta_key    Metadata name
- * @param  mixed   $meta_value  Metadata value
- * @param  bool    $unique      Optional, default is false. Whether the same key
- *                              can be duplicated
- *
- * @return bool False for failure. True for success.
- */
-function add_term_meta( $term_id, $meta_key, $meta_value, $unique = false ) {
-	return add_metadata( 'term', $term_id, $meta_key, $meta_value, $unique );
-}
-
-/**
- * Remove metadata matching criteria from a term.
- *
- * You can match based on the key, or key and value. Removing based on key and
- * value, will keep from removing duplicate metadata with the same key. It also
- * allows removing all metadata matching key if needed.
- *
- * @since 0.1.0
- *
- * @param  int     $term_id    Term ID
- * @param  string  $meta_key   Metadata name
- * @param  mixed   $meta_value Optional. Metadata value
- *
- * @return bool False for failure. True for success.
- */
-function delete_term_meta( $term_id, $meta_key, $meta_value = '' ) {
-	return delete_metadata( 'term', $term_id, $meta_key, $meta_value );
-}
-
-/**
- * Delete everything from term meta matching meta key.
- *
- * @since 0.1.0
- *
- * @param string $term_meta_key Key to search for when deleting.
- *
- * @return bool Whether the term meta key was deleted from the database.
- */
-function delete_term_meta_by_key( $term_meta_key ) {
-	return delete_metadata( 'term', null, $term_meta_key, '', true );
-}
-
-/**
- * Retrieve term meta field for a term.
- *
- * @since 0.1.0
- *
- * @param  int     $term_id  Term ID
- * @param  string  $key      The meta key to retrieve
- * @param  bool    $single   Whether to return a single value
- *
- * @return mixed Will be an array if $single is false. Will be value of meta
- *               data field if $single is true
- */
-function get_term_meta( $term_id, $key, $single = false ) {
-	return get_metadata( 'term', $term_id, $key, $single );
-}
-
-/**
- * Update term meta field based on term ID.
- *
- * Use the $prev_value parameter to differentiate between meta fields with the
- * same key and term ID.
- *
- * If the meta field for the term does not exist, it will be added.
- *
- * @since 0.1.0
- *
- * @param  int    $term_id     Term ID
- * @param  string $meta_key    Metadata key
- * @param  mixed  $meta_value  Metadata value
- * @param  mixed  $prev_value  Optional. Previous value to check before removing
- *
- * @return bool False on failure, true if success.
- */
-function update_term_meta( $term_id, $meta_key, $meta_value, $prev_value = '' ) {
-	return update_metadata( 'term', $term_id, $meta_key, $meta_value, $prev_value );
-}
+endif;
