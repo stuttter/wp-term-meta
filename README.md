@@ -116,11 +116,9 @@ No. All of WordPress's core database tables remain untouched.
 
 Yes. It uses the `WP_Meta_Query` class to create the necessary MySQL. You can interface with it by passing a `meta_query` argument into `get_terms()`, by filtering `get_terms_args` or however else you choose.
 
-### Where can I get support? =
+### Where can I get support?
 
 The WordPress support forums: https://wordpress.org/tags/wp-term-meta/
-
-### Where can I find documentation? =
 
 ### Can I contribute?
 
