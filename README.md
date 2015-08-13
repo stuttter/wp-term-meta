@@ -102,6 +102,25 @@ WP Term Meta allows developers to store key/value pairs of data along with a cat
  */
 ```
 
+### get_terms()
+
+Use the `meta_query` argument according te the `WP_Meta_Query` specification:
+http://codex.wordpress.org/Class_Reference/WP_Meta_Query
+
+```
+$terms = get_terms( 'category', array(
+	'depth'      => 1,
+	'number'     => 100,
+	'parent'     => $parent_id,
+	'orderby'    => 'order',
+	'order'      => 'ASC',
+	'hide_empty' => false,
+	'meta_query' => array( array(
+		'key' => 'term_thumbnail'
+	) )
+) );
+```
+
 # FAQ
 
 ### Does this create new database tables?
