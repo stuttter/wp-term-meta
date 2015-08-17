@@ -109,15 +109,17 @@ http://codex.wordpress.org/Class_Reference/WP_Meta_Query
 
 ```
 $terms = get_terms( 'category', array(
-	'depth'      => 1,
-	'number'     => 100,
-	'parent'     => 0,
-	'orderby'    => 'order', // Try the "wp-term-order" plugin!
-	'order'      => 'ASC',
-	'hide_empty' => false,
-	'meta_query' => array( array(
-		'key' => 'term_thumbnail'
-	) )
+        'depth'      => 1,
+        'number'     => 100,
+        'parent'     => 0,
+        'orderby'    => 'order', // Try the "wp-term-order" plugin!
+        'order'      => 'ASC',
+        'hide_empty' => false,
+
+        // Looky looky!
+        'meta_query' => array( array(
+                'key' => 'term_thumbnail'
+        ) )
 ) );
 ```
 
