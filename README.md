@@ -12,7 +12,7 @@ WP Term Meta allows developers to store key/value pairs of data along with a cat
 
 # Usage
 
-### add_meta_data()
+### add_term_meta()
 
 ```
 /**
@@ -29,7 +29,7 @@ WP Term Meta allows developers to store key/value pairs of data along with a cat
  */
 ```
 
-### delete_meta_data()
+### delete_term_meta()
 
 ```
 /**

@@ -31,6 +31,27 @@ Yes. It creates a new `wp_termmeta` database table for each site it's activated 
 
 No. All of WordPress's core database tables remain untouched.
 
+= How do I query for terms via metadata? =
+
+With WordPress's `get_terms()` function, the same as usual, but with an additional `meta_query` argument according the `WP_Meta_Query` specification:
+http://codex.wordpress.org/Class_Reference/WP_Meta_Query
+
+```
+$terms = get_terms( 'category', array(
+        'depth'      => 1,
+        'number'     => 100,
+        'parent'     => 0,
+        'orderby'    => 'order', // Try the "wp-term-order" plugin!
+        'order'      => 'ASC',
+        'hide_empty' => false,
+
+        // Looky looky!
+        'meta_query' => array( array(
+                'key' => 'term_thumbnail'
+        ) )
+) );
+```
+
 = Where can I get support? =
 
 The WordPress support forums: https://wordpress.org/tags/wp-term-meta/
