@@ -13,7 +13,17 @@ Metadata, for taxonomy terms.
 
 WP Term Meta allows developers to store key/value pairs of data along with a category, tag, or any custom taxonomy.
 
-Also checkout [https://wordpress.org/plugins/wp-term-order WP Term Order]
+Also checkout:
+
+* [WP Term Order](https://wordpress.org/plugins/wp-term-order/ "Metadata, for taxonomy terms.")
+* [WP Term Colors](https://wordpress.org/plugins/wp-term-colors/ "Pretty colors for categories, tags, and other taxonomy terms.")
+* [WP Term Icons](https://wordpress.org/plugins/wp-term-icons/ "Pretty icons for categories, tags, and other taxonomy terms.")
+* [WP User Groups](https://wordpress.org/plugins/wp-user-groups/ "Group users together with taxonomies & terms.")
+* [WP Event Calendar](https://wordpress.org/plugins/wp-event-calendar/ "Flexible events, with a calendar view.")
+
+== Screenshots ==
+
+1. Term Metadata Database Schema
 
 == Installation ==
 
