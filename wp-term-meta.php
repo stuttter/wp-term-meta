@@ -5,7 +5,7 @@
  * Plugin URI:  https://wordpress.org/plugins/wp-term-meta/
  * Description: Metadata, for taxonomy terms.
  * Author:      John James Jacoby
- * Version:     0.1.1
+ * Version:     0.1.2
  * Author URI:  https://profiles.wordpress.org/johnjamesjacoby/
  * License:     GPL v2 or later
  */
@@ -127,12 +127,12 @@ final class WP_Term_Meta {
 	/**
 	 * @var string Plugin version
 	 */
-	public $version = '0.1.0';
+	public $version = '0.1.2';
 
 	/**
 	 * @var string Database version
 	 */
-	public $db_version = 201508110005;
+	public $db_version = 201509010001;
 
 	/**
 	 * @var string Database version key
@@ -407,6 +407,8 @@ final class WP_Term_Meta {
 
 	/**
 	 * Filter `term_clauses` and add support for a `meta_query` argument
+	 *
+	 * @since 0.1.0
 	 *
 	 * @param array $pieces     Terms query SQL clauses.
 	 * @param array $taxonomies An array of taxonomies.
