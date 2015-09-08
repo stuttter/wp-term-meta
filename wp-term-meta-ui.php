@@ -110,7 +110,7 @@ class WP_Term_Meta_UI {
 			add_filter( "manage_edit-{$value}_sortable_columns", array( $this, 'sortable_columns'  ) );
 
 			add_action( "{$value}_add_form_fields",  array( $this, 'add_form_field'  ) );
-			add_action( "{$value}_edit_form_fields", array( $this, '	edit_form_field' ) );
+			add_action( "{$value}_edit_form_fields", array( $this, 'edit_form_field' ) );
 		}
 
 		// ajax actions
