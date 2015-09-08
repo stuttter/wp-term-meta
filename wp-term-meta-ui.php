@@ -3,6 +3,15 @@
 /**
  * Term Meta UI Class
  *
+ * This class is base helper to be extended by other plugins that may want to
+ * provide a UI for term meta values. It hooks into several different WordPress
+ * core actions & filters to add columns to list tables, add fields to forms,
+ * and handle the sanitization & saving of values.
+ *
+ * For now, this class is included in the term meta plugin, but it may end up as
+ * a plugin dependency for other term meta plugins, or might need to be split
+ * apart or included in every term meta plugin that requires a similar UI.
+ *
  * @since 0.1.3
  *
  * @package TermMeta/UI
