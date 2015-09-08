@@ -17,17 +17,6 @@ defined( 'ABSPATH' ) || exit;
 if ( ! function_exists( 'add_term_meta' ) ) :
 
 /**
- * Conditionally include the term meta UI class
- *
- * @since 0.1.3
- */
-function wp_include_term_meta_ui() {
-	if ( ! class_exists( 'WP_Term_Meta_UI' ) ) {
-		include 'wp-term-meta-ui.php';
-	}
-}
-
-/**
  * Add metadata field to a term.
  *
  * @since 0.1.0
