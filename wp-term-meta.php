@@ -5,7 +5,7 @@
  * Plugin URI:  https://wordpress.org/plugins/wp-term-meta/
  * Description: Metadata, for taxonomy terms.
  * Author:      John James Jacoby
- * Version:     0.1.2
+ * Version:     0.1.3
  * Author URI:  https://profiles.wordpress.org/johnjamesjacoby/
  * License:     GPL v2 or later
  */
@@ -15,6 +15,18 @@ defined( 'ABSPATH' ) || exit;
 
 // Yield to WordPress core
 if ( ! function_exists( 'add_term_meta' ) ) :
+
+/**
+ * Conditionally include the term meta UI class
+ *
+ * @since 0.1.3
+ */
+function wp_include_term_meta_ui() {
+	if ( ! class_exists( 'WP_Term_Meta_UI' ) ) {
+		include 'wp-term-meta-ui.php';
+	}
+}
+
 /**
  * Add metadata field to a term.
  *

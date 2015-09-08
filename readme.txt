@@ -3,7 +3,7 @@ Contributors: johnjamesjacoby
 Tags: taxonomy, term, meta, metadata
 Requires at least: 4.2
 Tested up to: 4.3
-Stable tag: 0.1.2
+Stable tag: 0.1.3
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -74,6 +74,9 @@ The WordPress support forums: https://wordpress.org/tags/wp-term-meta/
 http://github.com/johnjamesjacoby/wp-term-meta/
 
 == Changelog ==
+
+= 0.1.3 =
+* Introduce base UI helper class
 
 = 0.1.2 =
 * Code cleanup
