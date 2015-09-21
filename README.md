@@ -139,7 +139,7 @@ Yes. It uses the `WP_Meta_Query` class to create the necessary MySQL. You can in
 
 ### Where can I get support?
 
-The WordPress support forums: https://wordpress.org/tags/wp-term-meta/
+The WordPress support forums: https://wordpress.org/support/plugin/wp-term-meta/
 
 ### Can I contribute?
 
