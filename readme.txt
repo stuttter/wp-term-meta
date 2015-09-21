@@ -68,11 +68,11 @@ $terms = get_terms( 'category', array(
 
 = Where can I get support? =
 
-The WordPress support forums: https://wordpress.org/tags/wp-term-meta/
+The WordPress support forums: https://wordpress.org/support/plugins/wp-term-meta/
 
 = Where can I find documentation? =
 
-http://github.com/johnjamesjacoby/wp-term-meta/
+http://github.com/stuttter/wp-term-meta/
 
 == Changelog ==
 
