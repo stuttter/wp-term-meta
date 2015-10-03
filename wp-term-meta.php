@@ -279,6 +279,7 @@ final class WP_Term_Meta {
 		// Should we switch?
 		if ( false !== $site_id ) {
 			$switched = true;
+			require_once ABSPATH . '/wp-includes/ms-blogs.php';
 			switch_to_blog( $site_id );
 		}
 
@@ -304,7 +305,7 @@ final class WP_Term_Meta {
 
 		// If activated on a particular blog, just set it up there.
 		if ( false === $network_wide ) {
-			$this->install();
+			$this->install(false);
 			return;
 		}
 
