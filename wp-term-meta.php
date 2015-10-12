@@ -350,12 +350,13 @@ final class WP_Term_Meta {
 	 */
 	private function upgrade_database( $old_version = 0 ) {
 
-		$old_version = (int) $old_version;
-
 		// The main column alter
-		if ( $old_version < 201508110005 ) {
-			$this->create_termmeta_table();
+		if ( version_compare( (int) $old_version, 201509010001, '>=' ) ) {
+			return;
 		}
+
+		// Create term table
+		$this->create_termmeta_table();
 
 		// Update the DB version
 		update_option( $this->db_version_key, $this->db_version );
