@@ -228,6 +228,7 @@ final class WP_Term_Meta {
 	 */
 	public function add_termmeta_to_db_object() {
 		$this->db->termmeta = "{$this->db->prefix}termmeta";
+		$this->db->tables[] = "termmeta";
 	}
 
 	/**
