@@ -5,7 +5,7 @@
  * Plugin URI:  https://wordpress.org/plugins/wp-term-meta/
  * Description: Metadata, for taxonomy terms.
  * Author:      John James Jacoby
- * Version:     0.1.3
+ * Version:     0.1.4
  * Author URI:  https://profiles.wordpress.org/johnjamesjacoby/
  * License:     GPL v2 or later
  */
